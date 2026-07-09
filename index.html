@@ -4,14 +4,102 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Голосовой ввод — клавиатура</title>
-  <link rel="stylesheet" href="styles.css?v=16">
+  <link rel="stylesheet" href="styles.css?v=26">
+  <link rel="stylesheet" href="keyboard.css?v=5">
 </head>
 <body>
   <main class="page">
-    <div class="phone">
+    <div class="phone phone--classic">
       <div class="phone-screen"></div>
 
-      <section class="voice-keyboard voice-keyboard--idle" aria-label="Голосовой ввод">
+      <section class="classic-keyboard" id="classicKeyboard" aria-label="Клавиатура">
+        <header class="classic-keyboard__bar">
+          <div class="classic-keyboard__bar-btn classic-keyboard__bar-btn--grid" aria-hidden="true">
+            <span class="classic-keyboard__grid-icon"><span></span><span></span><span></span><span></span></span>
+          </div>
+          <div class="classic-keyboard__bar-btn classic-keyboard__bar-btn--logo" aria-hidden="true">
+            <img src="assets/alice-logo.svg" alt="">
+          </div>
+          <div class="classic-keyboard__bar-btn classic-keyboard__bar-btn--spellcheck" aria-hidden="true">
+            <img src="assets/kb-spellcheck.svg" alt="">
+          </div>
+          <div class="classic-keyboard__bar-btn classic-keyboard__bar-btn--tool" aria-hidden="true">
+            <img class="classic-keyboard__bar-icon classic-keyboard__bar-icon--paste" src="assets/kb-paste.svg" alt="">
+          </div>
+          <div class="classic-keyboard__bar-btn classic-keyboard__bar-btn--tool" aria-hidden="true">
+            <span class="classic-keyboard__translate-icon">
+              <img class="classic-keyboard__translate-layer classic-keyboard__translate-layer--stroke1" src="assets/kb-translate-1.svg" alt="">
+              <img class="classic-keyboard__translate-layer classic-keyboard__translate-layer--stroke2" src="assets/kb-translate-2.svg" alt="">
+              <img class="classic-keyboard__translate-layer classic-keyboard__translate-layer--stroke3" src="assets/kb-translate-3.svg" alt="">
+              <img class="classic-keyboard__translate-layer classic-keyboard__translate-layer--a" src="assets/kb-translate-a.svg" alt="">
+            </span>
+          </div>
+          <div class="classic-keyboard__bar-btn classic-keyboard__bar-btn--tool" aria-hidden="true">
+            <img class="classic-keyboard__bar-icon classic-keyboard__bar-icon--settings" src="assets/kb-settings.svg" alt="">
+          </div>
+          <button class="classic-keyboard__bar-btn classic-keyboard__bar-btn--mic" id="openVoiceBtn" type="button" aria-label="Голосовой ввод">
+            <img src="assets/kb-mic.svg" alt="">
+          </button>
+          <div class="classic-keyboard__bar-btn classic-keyboard__bar-btn--tool" aria-hidden="true">
+            <img class="classic-keyboard__bar-icon classic-keyboard__bar-icon--smile" src="assets/kb-smile.svg" alt="">
+          </div>
+        </header>
+
+        <div class="classic-keyboard__rows">
+          <div class="classic-keyboard__row" aria-hidden="true">
+            <span class="classic-keyboard__key">й</span>
+            <span class="classic-keyboard__key">ц</span>
+            <span class="classic-keyboard__key">у</span>
+            <span class="classic-keyboard__key">к</span>
+            <span class="classic-keyboard__key">е</span>
+            <span class="classic-keyboard__key">н</span>
+            <span class="classic-keyboard__key">г</span>
+            <span class="classic-keyboard__key">ш</span>
+            <span class="classic-keyboard__key">щ</span>
+            <span class="classic-keyboard__key">з</span>
+            <span class="classic-keyboard__key">х</span>
+          </div>
+          <div class="classic-keyboard__row" aria-hidden="true">
+            <span class="classic-keyboard__key">ф</span>
+            <span class="classic-keyboard__key">ы</span>
+            <span class="classic-keyboard__key">в</span>
+            <span class="classic-keyboard__key">а</span>
+            <span class="classic-keyboard__key">п</span>
+            <span class="classic-keyboard__key">р</span>
+            <span class="classic-keyboard__key">о</span>
+            <span class="classic-keyboard__key">л</span>
+            <span class="classic-keyboard__key">д</span>
+            <span class="classic-keyboard__key">ж</span>
+            <span class="classic-keyboard__key">э</span>
+          </div>
+          <div class="classic-keyboard__row" aria-hidden="true">
+            <span class="classic-keyboard__key classic-keyboard__key--tone classic-keyboard__key--icon"><img class="classic-keyboard__key-icon classic-keyboard__key-icon--shift" src="assets/kb-shift.svg" alt=""></span>
+            <span class="classic-keyboard__key">я</span>
+            <span class="classic-keyboard__key">ч</span>
+            <span class="classic-keyboard__key">с</span>
+            <span class="classic-keyboard__key">м</span>
+            <span class="classic-keyboard__key">и</span>
+            <span class="classic-keyboard__key">т</span>
+            <span class="classic-keyboard__key">ь</span>
+            <span class="classic-keyboard__key">б</span>
+            <span class="classic-keyboard__key">ю</span>
+            <span class="classic-keyboard__key classic-keyboard__key--tone classic-keyboard__key--icon"><img class="classic-keyboard__key-icon classic-keyboard__key-icon--backspace" src="assets/kb-backspace.svg" alt=""></span>
+          </div>
+          <div class="classic-keyboard__row" aria-hidden="true">
+            <span class="classic-keyboard__key classic-keyboard__key--tone classic-keyboard__key--icon"><img class="classic-keyboard__key-icon classic-keyboard__key-icon--symbols" src="assets/kb-symbols.svg" alt=""></span>
+            <span class="classic-keyboard__key classic-keyboard__key--tone classic-keyboard__key--icon"><img class="classic-keyboard__key-icon classic-keyboard__key-icon--globe" src="assets/kb-globe.svg" alt=""></span>
+            <span class="classic-keyboard__key">,</span>
+            <span class="classic-keyboard__key classic-keyboard__key--space">
+              <span class="classic-keyboard__space-lang">Русский</span>
+              <img class="classic-keyboard__key-icon classic-keyboard__key-icon--space-mic" src="assets/kb-space-mic.svg" alt="">
+            </span>
+            <span class="classic-keyboard__key">.</span>
+            <span class="classic-keyboard__key classic-keyboard__key--enter classic-keyboard__key--icon"><img class="classic-keyboard__key-icon classic-keyboard__key-icon--enter" src="assets/kb-enter.svg" alt=""></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="voice-keyboard voice-keyboard--idle" id="voiceKeyboard" aria-label="Голосовой ввод">
         <div class="voice-keyboard__bg" aria-hidden="true">
           <div class="shimmer">
             <div class="shimmer__base"></div>
@@ -28,7 +116,7 @@
         <canvas class="voice-keyboard__equalizer" id="equalizer" aria-hidden="true"></canvas>
 
         <header class="voice-keyboard__toolbar">
-          <button class="icon-btn icon-btn--ghost" type="button" aria-label="Обычная клавиатура">
+          <button class="icon-btn icon-btn--ghost" id="backToKeyboardBtn" type="button" aria-label="Обычная клавиатура">
             <img src="assets/keyboard.svg" alt="">
           </button>
 
@@ -47,8 +135,22 @@
         </div>
 
         <div class="voice-keyboard__content">
-          <p class="hint">Например</p>
-          <p class="transcript">Я буду в 7 часов. Нет, в 8</p>
+          <p class="hint">Ещё пример</p>
+          <div class="transcript-stack">
+            <div class="transcript-stage" id="transcriptStage">
+              <p class="transcript transcript--original" id="transcript" aria-live="polite"></p>
+              <p class="transcript transcript--result" id="transcriptResult" aria-hidden="true"></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="voice-keyboard__footer" aria-hidden="true">
+          <div class="icon-btn icon-btn--surface">
+            <img class="icon-btn__undo" src="assets/voice-undo.svg" alt="">
+          </div>
+          <div class="icon-btn icon-btn--surface">
+            <img class="icon-btn__delete" src="assets/voice-delete.svg" alt="">
+          </div>
         </div>
       </section>
     </div>
@@ -73,6 +175,6 @@
     }
   </script>
 
-  <script type="module" src="script.js?v=34"></script>
+  <script type="module" src="script.js?v=50"></script>
 </body>
 </html>

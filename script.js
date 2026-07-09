@@ -40,8 +40,43 @@ const {
 const lookTarget = new THREE.Vector3(LOOK_AT_X, LOOK_AT_Y, LOOK_AT_Z);
 
 const canvas = document.getElementById("equalizer");
-const keyboard = document.querySelector(".voice-keyboard");
+const phone = document.querySelector(".phone");
+const keyboard = document.getElementById("voiceKeyboard");
+const openVoiceBtn = document.getElementById("openVoiceBtn");
+const backToKeyboardBtn = document.getElementById("backToKeyboardBtn");
 const actionBtn = document.getElementById("actionBtn");
+const transcriptEl = document.getElementById("transcript");
+const transcriptResultEl = document.getElementById("transcriptResult");
+const transcriptStageEl = document.getElementById("transcriptStage");
+
+const hintEl = document.querySelector(".hint");
+
+const DEMOS = {
+  listening: {
+    hint: "Например",
+    phrase: "Я буду в 7 часов. Нет, в 8",
+    result: "Я буду в 8 часов",
+    wordDelays: [0, 440, 380, 320, 480, 1120, 360, 320],
+  },
+  idle: {
+    hint: "Ещё пример",
+    phrase: "Добавь милую эмодзи",
+    result: "Я буду в 8 часов",
+    emoji: "😊",
+    wordDelays: [0, 440, 380],
+  },
+};
+
+const DEMO_WORD_ANIM_MS = 600;
+const DEMO_STEP2_PAUSE_MS = 800;
+const DEMO_EMOJI_ANIM_DELAY_MS = 480;
+const DEFAULT_WORD_DELAY_MS = 420;
+
+let demoTimers = [];
+let demoWordEls = [];
+let demoEmojiEl = null;
+let demoStep2Played = false;
+let activeDemoKey = null;
 
 let camera;
 let scene;
@@ -73,17 +108,49 @@ bindAudioUnlock();
 animate();
 
 function bindUi() {
+  openVoiceBtn.addEventListener("click", showVoiceKeyboard);
+  backToKeyboardBtn.addEventListener("click", showClassicKeyboard);
+
   actionBtn.addEventListener("click", () => {
+    keyboard.classList.add("voice-keyboard--ui-animated");
+
     if (isListening) {
       setListening(false);
       return;
     }
 
-    setListening(true);
+    setListening(true, { startDemo: true });
   });
 }
 
-function setListening(active) {
+function showVoiceKeyboard() {
+  phone.classList.remove("phone--classic");
+  phone.classList.add("phone--voice");
+  keyboard.classList.remove("voice-keyboard--ui-animated");
+  setListening(true, { startDemo: true });
+  onWindowResize();
+}
+
+function showClassicKeyboard() {
+  stopDemoTranscript(false);
+  resetDemoUi();
+  resetVoiceUi();
+  keyboard.classList.remove("voice-keyboard--ui-animated");
+  phone.classList.remove("phone--voice");
+  phone.classList.add("phone--classic");
+}
+
+function resetVoiceUi() {
+  isListening = false;
+  voiceLift = 0;
+  voiceFlow = 0;
+  modeBlend = 1;
+  keyboard.classList.add("voice-keyboard--idle");
+  keyboard.classList.remove("voice-keyboard--listening");
+  actionBtn.setAttribute("aria-label", "Начать запись");
+}
+
+function setListening(active, options = {}) {
   isListening = active;
   keyboard.classList.toggle("voice-keyboard--idle", !active);
   keyboard.classList.toggle("voice-keyboard--listening", active);
@@ -91,11 +158,206 @@ function setListening(active) {
 
   if (active) {
     ensureAudio();
+    if (options.startDemo) {
+      startDemo("listening");
+    }
     return;
   }
 
   voiceLift = 0;
   voiceFlow = 0;
+  startDemo("idle");
+}
+
+function resetDemoUi() {
+  stopDemoTranscript(false);
+  demoStep2Played = false;
+  activeDemoKey = null;
+  demoEmojiEl = null;
+  transcriptEl.classList.remove("transcript--static", "transcript--dimmed");
+  transcriptStageEl.classList.remove("transcript-stage--expanded");
+  transcriptResultEl.replaceChildren();
+  transcriptResultEl.textContent = "";
+  transcriptResultEl.classList.remove("transcript--visible", "transcript--preview", "transcript--active");
+  transcriptResultEl.setAttribute("aria-hidden", "true");
+  demoWordEls.forEach((wordEl) => wordEl.classList.remove("transcript__word--visible"));
+  transcriptEl.replaceChildren();
+  demoWordEls = [];
+}
+
+function buildTranscriptWords(phrase) {
+  const words = phrase.split(/\s+/);
+
+  transcriptEl.replaceChildren(
+    ...words.map((word) => {
+      const span = document.createElement("span");
+      span.className = "transcript__word";
+      span.textContent = word;
+      return span;
+    }),
+  );
+
+  demoWordEls = [...transcriptEl.querySelectorAll(".transcript__word")];
+}
+
+function startDemo(demoKey) {
+  if (demoKey === "idle") {
+    startIdleDemo();
+    return;
+  }
+
+  startListeningDemo();
+}
+
+function startListeningDemo() {
+  stopDemoTranscript(false);
+  demoStep2Played = false;
+  activeDemoKey = "listening";
+  demoEmojiEl = null;
+
+  const { hint, phrase, wordDelays } = DEMOS.listening;
+  hintEl.textContent = hint;
+  buildTranscriptWords(phrase);
+
+  transcriptEl.classList.remove("transcript--static", "transcript--dimmed");
+  transcriptStageEl.classList.remove("transcript-stage--expanded");
+  transcriptResultEl.replaceChildren();
+  transcriptResultEl.textContent = "";
+  transcriptResultEl.classList.remove("transcript--visible", "transcript--preview", "transcript--active");
+  transcriptResultEl.setAttribute("aria-hidden", "true");
+  demoWordEls.forEach((wordEl) => wordEl.classList.remove("transcript__word--visible"));
+
+  scheduleWordReveal(wordDelays, "listening");
+}
+
+function startIdleDemo() {
+  stopDemoTranscript(false);
+  demoStep2Played = false;
+  activeDemoKey = "idle";
+
+  const { hint, phrase, result, emoji, wordDelays } = DEMOS.idle;
+  hintEl.textContent = hint;
+  buildTranscriptWords(phrase);
+
+  transcriptEl.classList.remove("transcript--static", "transcript--dimmed");
+  transcriptStageEl.classList.add("transcript-stage--expanded");
+
+  const lineSpan = document.createElement("span");
+  lineSpan.className = "transcript__result-line";
+
+  const textSpan = document.createElement("span");
+  textSpan.className = "transcript__result-text";
+  textSpan.textContent = result;
+
+  const emojiSpan = document.createElement("span");
+  emojiSpan.className = "transcript__emoji";
+  emojiSpan.textContent = emoji;
+
+  lineSpan.append(textSpan, emojiSpan);
+  transcriptResultEl.replaceChildren(lineSpan);
+  demoEmojiEl = emojiSpan;
+
+  transcriptResultEl.classList.remove("transcript--active");
+  transcriptResultEl.classList.add("transcript--visible", "transcript--preview");
+  transcriptResultEl.setAttribute("aria-hidden", "false");
+
+  demoWordEls.forEach((wordEl) => wordEl.classList.remove("transcript__word--visible"));
+
+  scheduleWordReveal(wordDelays, "idle");
+}
+
+function scheduleWordReveal(wordDelays, demoKey) {
+  let elapsed = 0;
+
+  demoWordEls.forEach((wordEl, index) => {
+    elapsed += wordDelays[index] ?? DEFAULT_WORD_DELAY_MS;
+    const timer = window.setTimeout(() => {
+      wordEl.classList.add("transcript__word--visible");
+    }, elapsed);
+    demoTimers.push(timer);
+  });
+
+  const step2Timer = window.setTimeout(() => {
+    if (phone.classList.contains("phone--voice") && isDemoContextActive(demoKey)) {
+      playDemoStep2();
+    }
+  }, elapsed + DEMO_WORD_ANIM_MS + DEMO_STEP2_PAUSE_MS);
+  demoTimers.push(step2Timer);
+}
+
+function isDemoContextActive(demoKey) {
+  if (demoKey === "listening") {
+    return isListening;
+  }
+
+  if (demoKey === "idle") {
+    return !isListening;
+  }
+
+  return false;
+}
+
+function playDemoStep2() {
+  if (!activeDemoKey) {
+    return;
+  }
+
+  demoStep2Played = true;
+
+  if (activeDemoKey === "idle") {
+    playIdleDemoStep2();
+    return;
+  }
+
+  transcriptEl.classList.add("transcript--dimmed");
+  transcriptStageEl.classList.add("transcript-stage--expanded");
+  transcriptResultEl.textContent = DEMOS.listening.result;
+  transcriptResultEl.setAttribute("aria-hidden", "false");
+
+  requestAnimationFrame(() => {
+    transcriptResultEl.classList.add("transcript--visible");
+  });
+}
+
+function playIdleDemoStep2() {
+  transcriptEl.classList.add("transcript--dimmed");
+  transcriptResultEl.classList.add("transcript--active");
+
+  const emojiTimer = window.setTimeout(() => {
+    if (phone.classList.contains("phone--voice") && !isListening && demoEmojiEl) {
+      demoEmojiEl.classList.add("transcript__emoji--visible");
+    }
+  }, DEMO_EMOJI_ANIM_DELAY_MS);
+  demoTimers.push(emojiTimer);
+}
+
+function stopDemoTranscript(showStatic) {
+  demoTimers.forEach((timer) => window.clearTimeout(timer));
+  demoTimers = [];
+
+  if (!showStatic) {
+    return;
+  }
+
+  transcriptEl.classList.add("transcript--static");
+  demoWordEls.forEach((wordEl) => wordEl.classList.add("transcript__word--visible"));
+
+  if (demoStep2Played && activeDemoKey === "listening") {
+    transcriptEl.classList.add("transcript--dimmed");
+    transcriptStageEl.classList.add("transcript-stage--expanded");
+    transcriptResultEl.textContent = DEMOS.listening.result;
+    transcriptResultEl.classList.add("transcript--visible");
+    transcriptResultEl.setAttribute("aria-hidden", "false");
+    return;
+  }
+
+  if (demoStep2Played && activeDemoKey === "idle") {
+    transcriptEl.classList.add("transcript--dimmed");
+    transcriptStageEl.classList.add("transcript-stage--expanded");
+    transcriptResultEl.classList.add("transcript--visible", "transcript--preview", "transcript--active");
+    transcriptResultEl.setAttribute("aria-hidden", "false");
+    demoEmojiEl?.classList.add("transcript__emoji--visible");
+  }
 }
 
 function bindAudioUnlock() {
