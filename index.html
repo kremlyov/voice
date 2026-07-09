@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Голосовой ввод — клавиатура</title>
-  <link rel="stylesheet" href="styles.css?v=9">
+  <link rel="stylesheet" href="styles.css?v=16">
 </head>
 <body>
   <main class="page">
     <div class="phone">
       <div class="phone-screen"></div>
 
-      <section class="voice-keyboard" aria-label="Голосовой ввод">
+      <section class="voice-keyboard voice-keyboard--idle" aria-label="Голосовой ввод">
         <div class="voice-keyboard__bg" aria-hidden="true">
           <div class="shimmer">
             <div class="shimmer__base"></div>
@@ -32,15 +32,19 @@
             <img src="assets/keyboard.svg" alt="">
           </button>
 
-          <div class="status">
-            <img class="status__logo" src="assets/alice-logo.svg" alt="">
-            <span class="status__text">Говорите, я слушаю</span>
-          </div>
-
-          <button class="icon-btn icon-btn--confirm" type="button" aria-label="Подтвердить">
-            <img src="assets/check.svg" alt="">
+          <button class="icon-btn icon-btn--action" id="actionBtn" type="button" aria-label="Начать запись">
+            <span class="icon-btn__icons" aria-hidden="true">
+              <img class="icon-btn__mic" src="assets/mic.svg" alt="">
+              <img class="icon-btn__check" src="assets/check.svg" alt="">
+            </span>
+            <span class="icon-btn__label">Начать</span>
           </button>
         </header>
+
+        <div class="voice-keyboard__status">
+          <img class="status__logo" src="assets/alice-logo.svg" alt="">
+          <span class="status__text">Говорите, я слушаю</span>
+        </div>
 
         <div class="voice-keyboard__content">
           <p class="hint">Например</p>
@@ -69,6 +73,6 @@
     }
   </script>
 
-  <script type="module" src="script.js?v=32"></script>
+  <script type="module" src="script.js?v=34"></script>
 </body>
 </html>
