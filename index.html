@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Голосовой ввод — клавиатура</title>
+  <link rel="stylesheet" href="styles.css?v=9">
+</head>
+<body>
+  <main class="page">
+    <div class="phone">
+      <div class="phone-screen"></div>
+
+      <section class="voice-keyboard" aria-label="Голосовой ввод">
+        <div class="voice-keyboard__bg" aria-hidden="true">
+          <div class="shimmer">
+            <div class="shimmer__base"></div>
+            <div class="shimmer__gradient">
+              <div class="shimmer__layer shimmer__layer--1"></div>
+              <div class="shimmer__layer shimmer__layer--2"></div>
+              <div class="shimmer__layer shimmer__layer--3"></div>
+              <img class="shimmer__texture" src="assets/bg-texture.png" alt="">
+              <div class="shimmer__grain"></div>
+            </div>
+          </div>
+        </div>
+
+        <canvas class="voice-keyboard__equalizer" id="equalizer" aria-hidden="true"></canvas>
+
+        <header class="voice-keyboard__toolbar">
+          <button class="icon-btn icon-btn--ghost" type="button" aria-label="Обычная клавиатура">
+            <img src="assets/keyboard.svg" alt="">
+          </button>
+
+          <div class="status">
+            <img class="status__logo" src="assets/alice-logo.svg" alt="">
+            <span class="status__text">Говорите, я слушаю</span>
+          </div>
+
+          <button class="icon-btn icon-btn--confirm" type="button" aria-label="Подтвердить">
+            <img src="assets/check.svg" alt="">
+          </button>
+        </header>
+
+        <div class="voice-keyboard__content">
+          <p class="hint">Например</p>
+          <p class="transcript">Я буду в 7 часов. Нет, в 8</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="x-shader/x-vertex" id="vertexshader">
+    attribute float scale;
+
+    void main() {
+      vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+      gl_PointSize = scale * (300.0 / -mvPosition.z);
+      gl_Position = projectionMatrix * mvPosition;
+    }
+  </script>
+
+  <script type="x-shader/x-fragment" id="fragmentshader">
+    uniform vec3 color;
+
+    void main() {
+      if (length(gl_PointCoord - vec2(0.5, 0.5)) > 0.475) discard;
+      gl_FragColor = vec4(color, 1.0);
+    }
+  </script>
+
+  <script type="module" src="script.js?v=32"></script>
+</body>
+</html>
