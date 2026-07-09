@@ -72,6 +72,14 @@ const DEMO_STEP2_PAUSE_MS = 800;
 const DEMO_EMOJI_ANIM_DELAY_MS = 480;
 const DEFAULT_WORD_DELAY_MS = 420;
 
+const SPEECH_ON_THRESHOLD = 0.5;
+const SPEECH_ON_HOLD_MS = 200;
+
+const COMMANDS_PROMO = {
+  hint: "Полезные команды",
+  commands: ["Очистить", "Отправить"],
+};
+
 let demoTimers = [];
 let demoWordEls = [];
 let demoEmojiEl = null;
@@ -87,6 +95,8 @@ let voiceLift = 0;
 let voiceFlow = 0;
 let modeBlend = 1;
 let isListening = false;
+let isSpeechDetected = false;
+let speechHoldSince = 0;
 let audioReady = false;
 let simulatedLevel = 0;
 let useSimulation = false;
@@ -142,12 +152,85 @@ function showClassicKeyboard() {
 
 function resetVoiceUi() {
   isListening = false;
+  setSpeechDetected(false);
   voiceLift = 0;
   voiceFlow = 0;
   modeBlend = 1;
   keyboard.classList.add("voice-keyboard--idle");
   keyboard.classList.remove("voice-keyboard--listening");
   actionBtn.setAttribute("aria-label", "Начать запись");
+}
+
+function setSpeechDetected(active) {
+  if (isSpeechDetected === active) {
+    return;
+  }
+
+  isSpeechDetected = active;
+  speechHoldSince = 0;
+  keyboard.classList.toggle("voice-keyboard--speech-detected", active);
+
+  if (active) {
+    showCommandsPromo();
+  }
+}
+
+function showCommandsPromo() {
+  stopDemoTranscript(false);
+  demoStep2Played = false;
+  activeDemoKey = null;
+  demoEmojiEl = null;
+
+  hintEl.textContent = COMMANDS_PROMO.hint;
+
+  transcriptEl.replaceChildren();
+  transcriptEl.className = "transcript transcript--original transcript--static transcript--commands";
+
+  const row = document.createElement("div");
+  row.className = "transcript-commands";
+
+  COMMANDS_PROMO.commands.forEach((command) => {
+    const word = document.createElement("span");
+    word.className = "transcript-commands__word";
+    word.textContent = command;
+    row.appendChild(word);
+  });
+
+  transcriptEl.appendChild(row);
+  demoWordEls = [];
+
+  transcriptStageEl.classList.remove("transcript-stage--expanded");
+  transcriptResultEl.replaceChildren();
+  transcriptResultEl.textContent = "";
+  transcriptResultEl.classList.remove("transcript--visible", "transcript--preview", "transcript--active");
+  transcriptResultEl.setAttribute("aria-hidden", "true");
+}
+
+function updateSpeechDetection(level) {
+  if (!isListening) {
+    setSpeechDetected(false);
+    return;
+  }
+
+  if (isSpeechDetected) {
+    return;
+  }
+
+  const now = performance.now();
+
+  if (level >= SPEECH_ON_THRESHOLD) {
+    if (speechHoldSince === 0) {
+      speechHoldSince = now;
+    }
+
+    if (now - speechHoldSince >= SPEECH_ON_HOLD_MS) {
+      setSpeechDetected(true);
+    }
+
+    return;
+  }
+
+  speechHoldSince = 0;
 }
 
 function setListening(active, options = {}) {
@@ -157,6 +240,7 @@ function setListening(active, options = {}) {
   actionBtn.setAttribute("aria-label", active ? "Подтвердить" : "Начать запись");
 
   if (active) {
+    setSpeechDetected(false);
     ensureAudio();
     if (options.startDemo) {
       startDemo("listening");
@@ -164,6 +248,7 @@ function setListening(active, options = {}) {
     return;
   }
 
+  setSpeechDetected(false);
   voiceLift = 0;
   voiceFlow = 0;
   startDemo("idle");
@@ -174,7 +259,8 @@ function resetDemoUi() {
   demoStep2Played = false;
   activeDemoKey = null;
   demoEmojiEl = null;
-  transcriptEl.classList.remove("transcript--static", "transcript--dimmed");
+  transcriptEl.className = "transcript transcript--original";
+  transcriptEl.classList.remove("transcript--static", "transcript--dimmed", "transcript--commands");
   transcriptStageEl.classList.remove("transcript-stage--expanded");
   transcriptResultEl.replaceChildren();
   transcriptResultEl.textContent = "";
@@ -541,7 +627,9 @@ function render() {
   const targetBlend = isListening ? 0 : 1;
   modeBlend += (targetBlend - modeBlend) * 0.07;
 
-  const voiceAmp = updateVoiceEnvelope(readVoiceLevel()) * (1 - modeBlend);
+  const voiceAmpRaw = updateVoiceEnvelope(readVoiceLevel());
+  updateSpeechDetection(voiceAmpRaw);
+  const voiceAmp = voiceAmpRaw * (1 - modeBlend);
 
   const targetCameraX = mouseX * PARALLAX_AMOUNT * (1 - modeBlend);
   const targetCameraY = CAMERA_Y + -mouseY * PARALLAX_AMOUNT * (1 - modeBlend);

@@ -289,6 +289,7 @@ body {
 
 .voice-keyboard--idle .icon-btn--action {
   width: 106px;
+  padding-right: 14px;
 }
 
 .voice-keyboard--listening .icon-btn--action {
@@ -373,6 +374,45 @@ body {
 .voice-keyboard--listening .status__text {
   max-width: 180px;
   opacity: 1;
+}
+
+.voice-keyboard--listening .status__logo,
+.voice-keyboard--listening .status__text {
+  transition:
+    width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    max-width 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.28s ease,
+    transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.voice-keyboard--listening.voice-keyboard--speech-detected .status__logo {
+  width: 24px;
+  height: 24px;
+}
+
+.voice-keyboard--listening.voice-keyboard--speech-detected .status__text {
+  max-width: 0;
+  opacity: 0;
+  transform: translateX(-6px);
+}
+
+.transcript--commands {
+  display: block;
+  min-height: var(--transcript-line-height);
+}
+
+.transcript-commands {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+}
+
+.transcript-commands__word {
+  font-size: 24px;
+  line-height: 28px;
+  font-weight: 400;
 }
 
 .voice-keyboard--ui-animated .icon-btn--action {
