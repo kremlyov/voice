@@ -4,13 +4,20 @@
   box-sizing: border-box;
 }
 
+html {
+  height: 100%;
+  overflow: hidden;
+}
+
 html,
 body {
   margin: 0;
-  min-height: 100%;
 }
 
 body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
   font-family: "YS Text", "Helvetica Neue", Arial, sans-serif;
   background: #e8eaee;
   color: #000;
@@ -18,20 +25,20 @@ body {
 }
 
 .page {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 24px 16px;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .phone {
+  --safe-bottom: 34px;
+  --keyboard-height: 286px;
+
   position: relative;
-  width: min(375px, 100%);
-  height: min(812px, calc(100vh - 48px));
+  width: 100%;
+  height: 100%;
   background: #fff;
-  border-radius: 40px;
   overflow: hidden;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.12);
 }
 
 .phone-screen {
@@ -47,8 +54,9 @@ body {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
-  height: 286px;
+  bottom: calc(-1 * var(--safe-bottom));
+  height: var(--keyboard-height);
+  clip-path: inset(0 0 var(--safe-bottom) 0);
   overflow: hidden;
   background: var(--bg-base);
 }
@@ -408,7 +416,7 @@ body {
 .voice-keyboard__content {
   position: relative;
   z-index: 2;
-  padding: 26px 24px 0;
+  padding: 14px 24px 0;
   text-align: center;
 }
 
@@ -602,14 +610,29 @@ body {
 
 @media (max-width: 420px) {
   .page {
-    padding: 0;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100dvh;
+  }
+}
+
+@media (min-width: 421px) {
+  body {
+    background: #e8eaee;
+  }
+
+  .page {
+    display: grid;
+    place-items: center;
+    padding: 24px 16px;
+    height: 100dvh;
   }
 
   .phone {
-    width: 100%;
-    height: 100vh;
-    height: 100dvh;
-    border-radius: 0;
-    box-shadow: none;
+    width: min(375px, 100%);
+    height: min(812px, calc(100dvh - 48px));
+    border-radius: 40px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.12);
   }
 }

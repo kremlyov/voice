@@ -2,8 +2,9 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
-  height: 286px;
+  bottom: calc(-1 * var(--safe-bottom, 34px));
+  height: var(--keyboard-height, 286px);
+  clip-path: inset(0 0 var(--safe-bottom, 34px) 0);
   display: flex;
   flex-direction: column;
   gap: 6px;
