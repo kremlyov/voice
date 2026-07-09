@@ -41,6 +41,7 @@ const lookTarget = new THREE.Vector3(LOOK_AT_X, LOOK_AT_Y, LOOK_AT_Z);
 
 const canvas = document.getElementById("equalizer");
 const keyboard = document.querySelector(".voice-keyboard");
+const actionBtn = document.getElementById("actionBtn");
 
 let camera;
 let scene;
@@ -49,8 +50,13 @@ let particles;
 let count = 0;
 let voiceLift = 0;
 let voiceFlow = 0;
+let modeBlend = 1;
+let isListening = false;
+let audioReady = false;
 let simulatedLevel = 0;
 let useSimulation = false;
+
+let micStream = null;
 
 let mouseX = 0;
 let mouseY = 0;
@@ -62,9 +68,35 @@ let frequencyData;
 let audioContext;
 
 initEqualizer();
-initAudio();
+bindUi();
 bindAudioUnlock();
 animate();
+
+function bindUi() {
+  actionBtn.addEventListener("click", () => {
+    if (isListening) {
+      setListening(false);
+      return;
+    }
+
+    setListening(true);
+  });
+}
+
+function setListening(active) {
+  isListening = active;
+  keyboard.classList.toggle("voice-keyboard--idle", !active);
+  keyboard.classList.toggle("voice-keyboard--listening", active);
+  actionBtn.setAttribute("aria-label", active ? "Подтвердить" : "Начать запись");
+
+  if (active) {
+    ensureAudio();
+    return;
+  }
+
+  voiceLift = 0;
+  voiceFlow = 0;
+}
 
 function bindAudioUnlock() {
   const unlock = () => {
@@ -150,27 +182,41 @@ function updateCameraProjection(width, height) {
   camera.updateProjectionMatrix();
 }
 
-async function initAudio() {
+async function ensureAudio() {
+  if (audioReady) {
+    if (audioContext?.state === "suspended") {
+      await audioContext.resume();
+    }
+    return;
+  }
+
   if (!navigator.mediaDevices?.getUserMedia) {
     useSimulation = true;
+    audioReady = true;
     return;
   }
 
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     audioContext = new AudioContext();
-    const source = audioContext.createMediaStreamSource(stream);
+    const source = audioContext.createMediaStreamSource(micStream);
     analyser = audioContext.createAnalyser();
     analyser.fftSize = 256;
     analyser.smoothingTimeConstant = ANALYSER_SMOOTHING;
     source.connect(analyser);
     frequencyData = new Uint8Array(analyser.frequencyBinCount);
+    audioReady = true;
   } catch {
     useSimulation = true;
+    audioReady = true;
   }
 }
 
 function readVoiceLevel() {
+  if (!isListening) {
+    return 0;
+  }
+
   if (useSimulation) {
     simulatedLevel += (Math.random() - 0.5) * 0.022;
     simulatedLevel = THREE.MathUtils.clamp(simulatedLevel, 0, 1);
@@ -179,6 +225,10 @@ function readVoiceLevel() {
       Math.max(0, Math.sin(count * 0.06)) * 0.11 +
       Math.max(0, Math.sin(count * 0.011)) * 0.16;
     return THREE.MathUtils.clamp(simulatedLevel * 0.32 + speechPulse, 0, 1);
+  }
+
+  if (!analyser) {
+    return 0;
   }
 
   analyser.getByteFrequencyData(frequencyData);
@@ -226,19 +276,26 @@ function animate() {
 }
 
 function render() {
-  const voiceAmp = updateVoiceEnvelope(readVoiceLevel());
+  const targetBlend = isListening ? 0 : 1;
+  modeBlend += (targetBlend - modeBlend) * 0.07;
 
-  const targetCameraX = mouseX * PARALLAX_AMOUNT;
-  const targetCameraY = CAMERA_Y + -mouseY * PARALLAX_AMOUNT;
+  const voiceAmp = updateVoiceEnvelope(readVoiceLevel()) * (1 - modeBlend);
+
+  const targetCameraX = mouseX * PARALLAX_AMOUNT * (1 - modeBlend);
+  const targetCameraY = CAMERA_Y + -mouseY * PARALLAX_AMOUNT * (1 - modeBlend);
   camera.position.x += (targetCameraX - camera.position.x) * PARALLAX_SPEED;
   camera.position.y += (targetCameraY - camera.position.y) * PARALLAX_SPEED;
   camera.lookAt(lookTarget);
 
   const voiceLiftAmount = Math.min(voiceAmp, 1.6);
-  const waveHeight =
+  const activeWaveHeight =
     WAVE_HEIGHT + voiceLiftAmount * WAVE_HEIGHT * WAVE_VOICE_MULTIPLIER;
-  const voiceSizeScale = 1 - Math.min(voiceLiftAmount, 1) * VOICE_SIZE_SHRINK;
-  const speedBoost = 1 + voiceLiftAmount * SPEED_VOICE_MULTIPLIER;
+  const waveHeight = activeWaveHeight * (1 - modeBlend);
+  const voiceSizeScale =
+    1 - Math.min(voiceLiftAmount, 1) * VOICE_SIZE_SHRINK * (1 - modeBlend);
+  const speedBoost = 1 + voiceLiftAmount * SPEED_VOICE_MULTIPLIER * (1 - modeBlend);
+  const motion = count * (1 - modeBlend * 0.85);
+  const wavePulse = 1 - modeBlend;
 
   const positions = particles.geometry.attributes.position.array;
   const scales = particles.geometry.attributes.scale.array;
@@ -249,13 +306,13 @@ function render() {
   for (let ix = 0; ix < POINTS_X; ix++) {
     for (let iy = 0; iy < POINTS_Y; iy++) {
       positions[i + 1] =
-        Math.sin((ix + count) * 0.3) * waveHeight +
-        Math.sin((iy + count) * 0.5) * waveHeight;
+        Math.sin((ix + motion) * 0.3) * waveHeight +
+        Math.sin((iy + motion) * 0.5) * waveHeight;
 
       scales[j] =
         (POINT_SIZE +
-          (Math.sin((ix + count) * 0.3) + 1) * POINT_GROW +
-          (Math.sin((iy + count) * 0.5) + 1) * POINT_GROW) *
+          (Math.sin((ix + motion) * 0.3) + 1) * POINT_GROW * wavePulse +
+          (Math.sin((iy + motion) * 0.5) + 1) * POINT_GROW * wavePulse) *
         voiceSizeScale;
 
       i += 3;
@@ -267,5 +324,5 @@ function render() {
   particles.geometry.attributes.scale.needsUpdate = true;
 
   renderer.render(scene, camera);
-  count += ANIMATION_SPEED * speedBoost;
+  count += ANIMATION_SPEED * (0.15 + speedBoost * 0.85);
 }
