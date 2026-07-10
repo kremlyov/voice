@@ -6,6 +6,7 @@ const config = resolvePresetConfig(preset);
 
 const {
   POINTS_GAP,
+  POINTS_GAP_Z,
   POINTS_X,
   POINTS_Y,
   POINT_SIZE,
@@ -29,10 +30,12 @@ const {
   LOOK_AT_Y,
   LOOK_AT_Z,
   VIEW_OFFSET_RATIO,
+  VIEW_OFFSET_Y_PX,
   SCENE_OPACITY,
   MATERIAL_COLOR,
   VOICE_GAIN,
   WAVE_VOICE_MULTIPLIER,
+  WAVE_LISTENING_HEIGHT,
   VOICE_SIZE_SHRINK,
   SPEED_VOICE_MULTIPLIER,
 } = config;
@@ -463,7 +466,12 @@ function initEqualizer() {
   windowHalfX = width / 2;
   windowHalfY = height / 2;
 
-  camera = new THREE.PerspectiveCamera(CAMERA_FOV, width / height, 10, 10000);
+  camera = new THREE.PerspectiveCamera(
+    CAMERA_FOV,
+    width / height,
+    10,
+    Math.max(20000, CAMERA_Z * 1.4),
+  );
   camera.position.set(0, CAMERA_Y, CAMERA_Z);
 
   scene = new THREE.Scene();
@@ -480,7 +488,7 @@ function initEqualizer() {
     for (let iy = 0; iy < POINTS_Y; iy++) {
       positions[i] = ix * POINTS_GAP - (POINTS_X * POINTS_GAP) / 2;
       positions[i + 1] = 0;
-      positions[i + 2] = iy * POINTS_GAP - (POINTS_Y * POINTS_GAP) / 2;
+      positions[i + 2] = iy * POINTS_GAP_Z - (POINTS_Y * POINTS_GAP_Z) / 2;
       scales[j] = 1;
       i += 3;
       j += 1;
@@ -524,9 +532,10 @@ function updateCameraProjection(width, height) {
   const fullWidth = Math.round(width * pixelRatio);
   const fullHeight = Math.round(height * pixelRatio);
   const offsetX = Math.round(fullWidth * VIEW_OFFSET_RATIO);
+  const offsetY = Math.round(VIEW_OFFSET_Y_PX * pixelRatio);
 
   camera.aspect = width / height;
-  camera.setViewOffset(fullWidth, fullHeight, offsetX, 0, fullWidth, fullHeight);
+  camera.setViewOffset(fullWidth, fullHeight, offsetX, -offsetY, fullWidth, fullHeight);
   camera.updateProjectionMatrix();
 }
 
@@ -638,8 +647,9 @@ function render() {
   camera.lookAt(lookTarget);
 
   const voiceLiftAmount = Math.min(voiceAmp, 1.6);
+  const listeningBaseHeight = WAVE_LISTENING_HEIGHT ?? WAVE_HEIGHT;
   const activeWaveHeight =
-    WAVE_HEIGHT + voiceLiftAmount * WAVE_HEIGHT * WAVE_VOICE_MULTIPLIER;
+    listeningBaseHeight + voiceLiftAmount * WAVE_HEIGHT * WAVE_VOICE_MULTIPLIER;
   const waveHeight = activeWaveHeight * (1 - modeBlend);
   const voiceSizeScale =
     1 - Math.min(voiceLiftAmount, 1) * VOICE_SIZE_SHRINK * (1 - modeBlend);

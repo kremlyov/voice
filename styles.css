@@ -50,6 +50,7 @@ body {
 .voice-keyboard {
   --bg-base: #f6f8fb;
   --shimmer-gradient-opacity: 0.2;
+  --wave-layer-lift: 60px;
 
   position: absolute;
   left: 0;
@@ -64,7 +65,10 @@ body {
 .voice-keyboard__bg,
 .voice-keyboard__equalizer {
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  top: calc(-1 * var(--wave-layer-lift));
+  bottom: 0;
   pointer-events: none;
 }
 
@@ -456,7 +460,7 @@ body {
 .voice-keyboard__content {
   position: relative;
   z-index: 2;
-  padding: 14px 24px 0;
+  padding: 16px 24px 0;
   text-align: center;
 }
 
@@ -494,7 +498,7 @@ body {
 }
 
 .hint {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   font-size: 16px;
   line-height: 20px;
   opacity: 0.4;

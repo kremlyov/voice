@@ -6,16 +6,20 @@
 export const WAVE_PRESETS = {
   "центр волны": {
     name: "центр волны",
-    note: "Центр 50%, Y660 Z0.72, gap 182, точки 6.07, слой 30%. Фон #F6F8FB + градиент 20%. Голос: attack 0.52.",
-    savedAt: "2026-07-09",
+    note:
+      "gap 218.4, gapZ 283.92, точки 9.105, WAVE_LISTENING_HEIGHT 70, WAVE_VOICE x6.3, слой 30%. " +
+      "Камера Y660 Z0.72 look 1.0/0.52. CSS wave-layer-lift 60px.",
+    savedAt: "2026-07-10",
 
     grid: {
-      POINTS_GAP: 182,
+      POINTS_GAP: 218.4,
+      POINTS_GAP_Z: 283.92,
       POINTS_X: 50,
       POINTS_Y: 50,
-      POINT_SIZE: 6.07,
-      POINT_GROW: 6.07,
+      POINT_SIZE: 9.105,
+      POINT_GROW: 9.105,
       WAVE_HEIGHT: 50,
+      WAVE_LISTENING_HEIGHT: 70,
       ANIMATION_SPEED: 0.01,
     },
 
@@ -23,16 +27,16 @@ export const WAVE_PRESETS = {
       SCENE_Y: -500,
       WAVE_X: 0,
       WAVE_Y: 420,
-      WAVE_Z_RATIO: 0.25, // (POINTS_Y * POINTS_GAP) / 4
+      WAVE_Z_RATIO: 0.25,
     },
 
     camera: {
       FOV: 75,
-      POSITION_Z_RATIO: 0.72, // дальше от сцены — волна мельче
+      POSITION_Z_RATIO: 0.72,
       POSITION_Y: 660,
       LOOK_AT_X: 0,
-      LOOK_AT_Y_OFFSET: 1.0, // смотрим на уровень поверхности волны
-      LOOK_AT_Z_RATIO: 0.52, // поле под «вертолётом», не дальний горизонт
+      LOOK_AT_Y_OFFSET: 1.0,
+      LOOK_AT_Z_RATIO: 0.52,
     },
 
     view: {
@@ -56,7 +60,7 @@ export const WAVE_PRESETS = {
       VOICE_RELEASE: 0.09,
       VOICE_FLOW_SMOOTHING: 0.14,
       VOICE_GAIN: 2.35,
-      WAVE_VOICE_MULTIPLIER: 4.2,
+      WAVE_VOICE_MULTIPLIER: 6.3,
       VOICE_SIZE_SHRINK: 0.1,
       SPEED_VOICE_MULTIPLIER: 0.55,
     },
@@ -79,10 +83,12 @@ export function getActivePreset() {
 }
 
 export function resolvePresetConfig(preset) {
-  const gridDepth = preset.grid.POINTS_Y * preset.grid.POINTS_GAP;
+  const gapZ = preset.grid.POINTS_GAP_Z ?? preset.grid.POINTS_GAP;
+  const gridDepth = preset.grid.POINTS_Y * gapZ;
 
   return {
     ...preset.grid,
+    POINTS_GAP_Z: gapZ,
     ...preset.parallax,
     ...preset.audio,
     SCENE_Y: preset.scene.SCENE_Y,
@@ -96,6 +102,7 @@ export function resolvePresetConfig(preset) {
     LOOK_AT_Y: preset.scene.SCENE_Y + preset.scene.WAVE_Y * preset.camera.LOOK_AT_Y_OFFSET,
     LOOK_AT_Z: gridDepth * preset.camera.LOOK_AT_Z_RATIO,
     VIEW_OFFSET_RATIO: preset.view.VIEW_OFFSET_RATIO,
+    VIEW_OFFSET_Y_PX: preset.view.VIEW_OFFSET_Y_PX ?? 0,
     SCENE_OPACITY: preset.view.sceneOpacity,
     MATERIAL_COLOR: preset.material.color,
     BG_BASE: preset.background?.baseColor ?? "#f6f8fb",
