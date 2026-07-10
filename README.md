@@ -61,25 +61,29 @@ export const ACTIVE_PRESET = "центр волны";
 
 Чтобы откатиться — поменять `ACTIVE_PRESET` или править значения в `WAVE_PRESETS["центр волны"]`.
 
-### Что зафиксировано (2026-07-09)
+### Что зафиксировано (2026-07-10)
 
-**Сетка:** gap 182, точки 6.07, 50×50  
+**Сетка:** gap 218.4 (X = Z), точки 9.105, 50×50, `WAVE_LISTENING_HEIGHT` 70  
 **Камера:** Y 660, Z ratio 0.72, вид «с вертолёта» (LOOK_AT_Y_OFFSET 1.0, LOOK_AT_Z 0.52)  
-**Центр кадра:** `VIEW_OFFSET_RATIO: 0.25` — через `camera.setViewOffset`, не сдвиг сцены (иначе обрезается)  
+**Центр кадра:** `VIEW_OFFSET_RATIO: 0.25` — через `camera.setViewOffset`, не сдвиг сцены  
 **Точки:** чёрные, прозрачность слоя canvas 30% (`sceneOpacity: 0.3`)  
-**Фон:** база `#F6F8FB` + CSS-градиент поверх (`--shimmer-gradient-opacity: 0.2` в styles.css)  
-**Голос:** не «настоящий эквалайзер» — envelope с attack/release + flow smoothing:
-- attack 0.52, release 0.09, flow 0.14
-- gain 2.35, wave ×4.2
-- при голосе точки **уменьшаются** (−10%), не растут — меньше шума
+**Фон:** база `#F6F8FB` + CSS-градиент (`--shimmer-gradient-opacity: 0.2`)  
+**Позиция слоёв (styles.css):**
+- `--wave-layer-lift: 34px` — фон + shimmer (`transform`)
+- `--wave-scene-lift: 6px` — только canvas волны, поверх фона
+- WebGL рендер по `keyboard.clientHeight` (286px), **не** по высоте canvas с lift — иначе ломается aspect
+
+**Голос:** attack 0.52, release 0.09, flow 0.14, gain 2.35, wave ×6.3, shrink −10%
 
 ## Важные технические решения
 
 1. **Центр перспективы** — только `VIEW_OFFSET_RATIO`, не `scene.position.x` / не `particles.position.x` (сетка обрезается по краю).
-2. **Высота волны** — `particles.position.y = 420`, не `scene.position.y`.
-3. **Прозрачность точек** — на всём `<canvas>`, не per-point alpha (иначе точки просвечивают друг через друга).
-4. **Фон** — код (3 CSS-слоя + grain), текстура `assets/bg-texture.png` для «морозного стекла». Прозрачность градиента: `--shimmer-gradient-opacity` на `.voice-keyboard`.
-5. **Three.js** — import из `https://esm.sh/three` (CDN, без bundler).
+2. **Подъём волны** — только CSS `transform` на `.voice-keyboard__bg` / `__equalizer`; не `top: -Npx` (ломает aspect canvas).
+3. **Размер WebGL** — `keyboard.clientWidth/Height`, не `canvas.getBoundingClientRect()` после lift.
+4. **Высота волны** — `particles.position.y = 420`, не `scene.position.y`.
+5. **Прозрачность точек** — на всём `<canvas>`, не per-point alpha (иначе точки просвечивают друг через друга).
+6. **Фон** — код (3 CSS-слоя + grain), текстура `assets/bg-texture.png` для «морозного стекла». Прозрачность градиента: `--shimmer-gradient-opacity` на `.voice-keyboard`.
+7. **Three.js** — import из `https://esm.sh/three` (CDN, без bundler).
 
 ## Что НЕ сделано
 

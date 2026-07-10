@@ -7,13 +7,14 @@ export const WAVE_PRESETS = {
   "центр волны": {
     name: "центр волны",
     note:
-      "gap 218.4, gapZ 283.92, точки 9.105, WAVE_LISTENING_HEIGHT 70, WAVE_VOICE x6.3, слой 30%. " +
-      "Камера Y660 Z0.72 look 1.0/0.52. CSS wave-layer-lift 60px.",
+      "Финал 2026-07-10. gap 218.4 (X=Z), точки 9.105, WAVE_LISTENING_HEIGHT 70, WAVE_VOICE x6.3, " +
+      "слой 30%. Камера Y660 Z0.72 look 1.0/0.52, VIEW_OFFSET_RATIO 0.25. " +
+      "CSS: wave-layer-lift 34px (фон), wave-scene-lift 6px (canvas), lift через transform. " +
+      "WebGL: keyboard.clientWidth/Height 286px — не растягивать canvas по lift.",
     savedAt: "2026-07-10",
 
     grid: {
       POINTS_GAP: 218.4,
-      POINTS_GAP_Z: 283.92,
       POINTS_X: 50,
       POINTS_Y: 50,
       POINT_SIZE: 9.105,
@@ -42,6 +43,13 @@ export const WAVE_PRESETS = {
     view: {
       VIEW_OFFSET_RATIO: 0.25,
       sceneOpacity: 0.3,
+    },
+
+    layout: {
+      waveLayerLiftPx: 34,
+      waveSceneLiftPx: 6,
+      renderSize: "keyboard",
+      liftMethod: "transform",
     },
 
     background: {

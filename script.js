@@ -1,5 +1,5 @@
 import * as THREE from "https://esm.sh/three";
-import { getActivePreset, resolvePresetConfig } from "./presets.js";
+import { getActivePreset, resolvePresetConfig } from "./presets.js?v=73";
 
 const preset = getActivePreset();
 const config = resolvePresetConfig(preset);
@@ -115,10 +115,33 @@ let analyser;
 let frequencyData;
 let audioContext;
 
-initEqualizer();
 bindUi();
 bindAudioUnlock();
 animate();
+
+function getEqualizerSize() {
+  const width = keyboard.clientWidth;
+  const height = keyboard.clientHeight;
+
+  if (!width || !height) {
+    return null;
+  }
+
+  return { width, height };
+}
+
+function ensureEqualizer() {
+  if (renderer) {
+    return true;
+  }
+
+  if (!getEqualizerSize()) {
+    return false;
+  }
+
+  initEqualizer();
+  return Boolean(renderer);
+}
 
 function bindUi() {
   openVoiceBtn.addEventListener("click", showVoiceKeyboard);
@@ -460,8 +483,16 @@ function bindAudioUnlock() {
 }
 
 function initEqualizer() {
-  const width = keyboard.clientWidth;
-  const height = keyboard.clientHeight;
+  if (renderer) {
+    return;
+  }
+
+  const size = getEqualizerSize();
+  if (!size) {
+    return;
+  }
+
+  const { width, height } = size;
 
   windowHalfX = width / 2;
   windowHalfY = height / 2;
@@ -611,8 +642,16 @@ function updateVoiceEnvelope(targetLevel) {
 }
 
 function onWindowResize() {
-  const width = keyboard.clientWidth;
-  const height = keyboard.clientHeight;
+  if (!ensureEqualizer()) {
+    return;
+  }
+
+  const size = getEqualizerSize();
+  if (!size) {
+    return;
+  }
+
+  const { width, height } = size;
 
   windowHalfX = width / 2;
   windowHalfY = height / 2;
@@ -629,10 +668,19 @@ function onPointerMove(event) {
 
 function animate() {
   requestAnimationFrame(animate);
+
+  if (!ensureEqualizer()) {
+    return;
+  }
+
   render();
 }
 
 function render() {
+  if (!renderer || !particles) {
+    return;
+  }
+
   const targetBlend = isListening ? 0 : 1;
   modeBlend += (targetBlend - modeBlend) * 0.07;
 
